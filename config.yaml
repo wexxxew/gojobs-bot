@@ -1,0 +1,80 @@
+# сколько вакансий максимум слать за один запуск (защита от потопа)
+max_per_run: 15
+# вакансии старше этого срока не отправляются (актуально при подключении нового источника)
+max_age_days: 14
+seen_file: seen.json
+
+filter:
+  # false: слать всё, где НЕТ стоп-слов (junior-вакансии редко подписаны
+  #        словом junior, а senior подписаны почти всегда)
+  # true:  слать только то, где есть слова из include
+  require_include: false
+  include:
+    - junior
+    - джун
+    - стаж          # стажёр, стажировка
+    - intern
+    - trainee
+    - без опыта
+    - entry level
+    - entry-level
+  exclude:
+    - senior
+    - сеньор
+    - синьор
+    - lead
+    - лид
+    - staff
+    - principal
+    - architect
+    - архитектор
+    - head of
+    - cto
+    - "5+ years"
+    - "6+ years"
+    - "7+ years"
+    - "8+ years"
+    # не-девелоперские роли, которые источники иногда тегают как golang
+    - customer success
+    - sales
+    - recruiter
+    - marketing
+    - hr manager
+    # реклама и промо в ТГ-каналах (не вакансии)
+    - erid                # маркировка рекламы
+    - поток курса
+    - "курс «"
+    - вебинар
+    - подборка
+    - промокод
+    - розыгрыш
+    - тестовое собеседование
+    # смежные роли, где Go лишь в списке навыков (шум с Хабра и RemoteOK)
+    - devops engineer
+    - devops-инженер
+    - qa engineer
+    - qa-инженер
+    - тестировщик
+    - системный аналитик
+    - data engineer
+    - frontend
+
+sources:
+  remoteok:
+    enabled: true
+  justjoin:
+    enabled: true
+    experience: [junior, mid]   # junior Go в Польше редкость, mid с 1-2 годами часто досягаем
+  golangprojects:
+    enabled: true
+  habr:
+    enabled: true
+    query: golang
+  # публичные ТГ-каналы (читаются через веб-превью t.me/s/<канал>)
+  # keywords: для смешанных каналов пост должен упоминать одно из слов
+  tg_channels:
+    - channel: godevjob                  # только Go-вакансии (бывает реклама курсов — режется стоп-словами)
+    - channel: forgoandrust              # Go и Rust вакансии
+      keywords: [golang, go]
+    - channel: jobforjunior              # джуны по всем языкам
+      keywords: [golang, go]
