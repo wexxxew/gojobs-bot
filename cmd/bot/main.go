@@ -111,18 +111,20 @@ func main() {
 	}
 
 	// --- отправка ---
+	// TrimSpace защищает от невидимых \r и пробелов, которые легко
+	// подцепить при заведении секретов (особенно на Windows)
 	sender := &telegram.Sender{
-		Token:  os.Getenv("TELEGRAM_TOKEN"),
-		ChatID: os.Getenv("TELEGRAM_CHAT_ID"),
+		Token:  strings.TrimSpace(os.Getenv("TELEGRAM_TOKEN")),
+		ChatID: strings.TrimSpace(os.Getenv("TELEGRAM_CHAT_ID")),
 	}
 	if sender.DryRun() {
 		log.Println("TELEGRAM_TOKEN/TELEGRAM_CHAT_ID не заданы — dry-run, печатаю в stdout")
 	}
 
 	sent := 0
+	var sendErr error
 	for _, v := range fresh {
-		if err := sender.Send(ctx, v); err != nil {
-			log.Printf("отправка: %v", err)
+		if sendErr = sender.Send(ctx, v); sendErr != nil {
 			break // не помечаем как seen — уйдёт в следующий запуск
 		}
 		seen.Add(v.ID)
@@ -134,6 +136,11 @@ func main() {
 
 	if err := seen.Save(); err != nil {
 		log.Fatalf("сохранение %s: %v", cfg.SeenFile, err)
+	}
+	if sendErr != nil {
+		// падаем с ненулевым кодом: пусть запуск в CI горит красным,
+		// а не прячет проблему за зелёной галочкой
+		log.Fatalf("отправка сломана (успело уйти %d): %v", sent, sendErr)
 	}
 	log.Printf("готово: новых вакансий отправлено — %d", sent)
 }
